@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use zbus::{dbus_proxy, zvariant::Value, Connection};
+use zbus::{
+    dbus_proxy, export::futures_util::TryStreamExt, zvariant::Value, Connection, MessageStream,
+};
 
 #[dbus_proxy]
 trait Notifications {
@@ -19,11 +21,10 @@ trait Notifications {
 }
 
 async fn notify_send(
-    connection: &Connection,
+    proxy: &NotificationsProxy<'_>,
     title: &str,
     body: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let proxy = NotificationsProxy::new(&connection).await?;
     _ = proxy
         .notify(
             "msteams-notify",
@@ -42,9 +43,30 @@ async fn notify_send(
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = Connection::session().await?;
-    // TODO: Listen for Teams notification message on dbus, then peform below
-    // See https://dbus.pages.freedesktop.org/zbus/client.html
-    // and https://bazile.org/writing/2019/audible_gnome_notifications.html
-    notify_send(&connection, "Hello from rust", "some body").await?;
+
+    connection
+        .call_method(
+            Some("org.freedesktop.DBus"),
+            "/org/freedesktop/DBus",
+            Some("org.freedesktop.DBus.Monitoring"),
+            "BecomeMonitor",
+            &(&[] as &[&str], 0u32),
+        )
+        .await?;
+
+    let mut stream = MessageStream::from(connection);
+
+    while let Some(msg) = stream.try_next().await? {
+        // I couldn't get match rules working so doing an if condition here instead...
+        if msg.interface().is_some()
+            && msg.interface().unwrap() == "org.freedesktop.Notifications"
+            && msg.member().is_some()
+            && msg.member().unwrap() == "Notify"
+        {
+            dbg!(&msg);
+            // TODO: Deserialize msg and check if it comes from MS Teams, if so republish it with sound
+        }
+    }
+
     Ok(())
 }
