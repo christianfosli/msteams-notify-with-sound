@@ -83,10 +83,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 last_notification_id = notify_send(
                     &connection2,
                     last_notification_id,
-                    "You have notifications from MS Teams",
-                    &format!("Original title: {}", title),
+                    &format!("MS Teams: {}", title),
+                    body.as_str(),
                 )
                 .await?;
+            } else {
+                println!("Ignoring notification from {app_name}");
             }
         }
     }
