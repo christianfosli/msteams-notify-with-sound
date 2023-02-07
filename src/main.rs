@@ -1,10 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use zbus::{
-    dbus_proxy, export::futures_util::TryStreamExt, zvariant::Value, Connection, MessageStream,
+    dbus_proxy,
+    export::futures_util::TryStreamExt,
+    zvariant::{Str, Structure, Value},
+    Connection, MessageStream,
 };
 
-#[dbus_proxy]
+#[dbus_proxy(assume_defaults = true)]
 trait Notifications {
     /// Call the org.freedesktop.Notifications.Notify D-Bus method
     fn notify(
@@ -21,14 +24,16 @@ trait Notifications {
 }
 
 async fn notify_send(
-    proxy: &NotificationsProxy<'_>,
+    connection: &Connection,
+    replaces_id: u32,
     title: &str,
     body: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    _ = proxy
+) -> Result<u32, Box<dyn std::error::Error>> {
+    let proxy = NotificationsProxy::new(connection).await?;
+    let id = proxy
         .notify(
             "msteams-notify",
-            0,
+            replaces_id,
             "mail-message-new",
             title,
             body,
@@ -37,12 +42,13 @@ async fn notify_send(
             5000,
         )
         .await?;
-    Ok(())
+    Ok(id)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = Connection::session().await?;
+    let connection2 = Connection::session().await?;
 
     connection
         .call_method(
@@ -54,7 +60,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .await?;
 
-    let mut stream = MessageStream::from(connection);
+    let mut stream = MessageStream::from(&connection);
+
+    let mut last_notification_id = 0;
 
     while let Some(msg) = stream.try_next().await? {
         // I couldn't get match rules working so doing an if condition here instead...
@@ -63,8 +71,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             && msg.member().is_some()
             && msg.member().unwrap() == "Notify"
         {
-            dbg!(&msg);
-            // TODO: Deserialize msg and check if it comes from MS Teams, if so republish it with sound
+            let msg_fields = msg.body::<Structure>()?.into_fields();
+            let app_name: Str = msg_fields[0].clone().try_into()?;
+            let title: Str = msg_fields[3].clone().try_into()?;
+            let body: Str = msg_fields[4].clone().try_into()?;
+
+            if app_name == Str::from("Google Chrome") && body.contains("teams.microsoft.com") {
+                println!("Republishing notification \"{}\" in 2 seconds", title);
+                tokio::time::sleep(Duration::from_secs(2)).await;
+
+                last_notification_id = notify_send(
+                    &connection2,
+                    last_notification_id,
+                    "You have notifications from MS Teams",
+                    &format!("Original title: {}", title),
+                )
+                .await?;
+            }
         }
     }
 

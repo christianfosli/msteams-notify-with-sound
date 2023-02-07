@@ -14,5 +14,5 @@ or constantly checking in MS Teams itself it's easy to miss something.
 This rust-based CLI listens to the notification on dbus and republishes the notification
 with a notification sound and in a way that it doesn't dissapear from the notifications center right away.
 
-:warning: **Work-In-Progress** Listening for notifications not yet implemented :warning:
+:warning: **Work-In-Progress** It seems to do its job now but there are some rough edges still.
 
