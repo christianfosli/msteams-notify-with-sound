@@ -331,7 +331,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "msteams-notify-with-sound"
+name = "msteams-notify"
 version = "0.1.0"
 dependencies = [
  "tokio",

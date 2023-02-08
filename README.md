@@ -47,5 +47,16 @@ It seems to do its job now but there are some rough edges I'd like to improve st
                    tokio::time::sleep(Duration::from_secs(2)).await;
   ```
 
-* Run with `cargo run --release`
+* Install with cargo (by default to ~/.cargo/bin)
 
+  ```
+  cargo install --locked --path .
+  ```
+
+* Run with `RUST_LOG=Debug msteams-notify`
+
+  * Adjust logging verbosity to your likign with the RUST_LOG variable
+
+  * This runs the msteams-notify binary we installed on the previous step.
+    You can also use standard cargo commands like `cargo run` to run it straght from the repo
+    without "installing" it first.
