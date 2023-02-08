@@ -77,7 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let body: Str = msg_fields[4].clone().try_into()?;
 
             if app_name == Str::from("Google Chrome") && body.contains("teams.microsoft.com") {
-                println!("Republishing notification \"{}\" in 2 seconds", title);
+                println!("Republishing notification {app_name} ({title}) in 2 seconds");
                 tokio::time::sleep(Duration::from_secs(2)).await;
 
                 last_notification_id = notify_send(
@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .await?;
             } else {
-                println!("Ignoring notification from {app_name}");
+                println!("Ignoring notification from {app_name} ({title})");
             }
         }
     }
