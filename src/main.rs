@@ -86,7 +86,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 tokio::time::sleep(Duration::from_secs(2)).await;
 
-                last_notification_id = notify_send(
+                let id = notify_send(
                     &connection2,
                     last_notification_id,
                     &format!("MS Teams: {}", title),
@@ -94,7 +94,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .await?;
 
-                event!(Level::INFO, app_name = %app_name, title = %title, "Republished notification");
+                event!(Level::INFO, id = %id, app_name = %app_name, title = %title, "Republished notification");
+
+                last_notification_id = id;
             } else {
                 event!(Level::DEBUG, app_name = %app_name, title = %title, "Ignored notification");
             }
