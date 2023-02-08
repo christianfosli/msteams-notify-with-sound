@@ -1,5 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
+use tracing::{event, span, Level};
 use zbus::{
     dbus_proxy,
     export::futures_util::TryStreamExt,
@@ -47,6 +48,8 @@ async fn notify_send(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt::init();
+
     let connection = Connection::session().await?;
     let connection2 = Connection::session().await?;
 
@@ -61,8 +64,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     let mut stream = MessageStream::from(&connection);
-
     let mut last_notification_id = 0;
+
+    event!(Level::DEBUG, "Monitoring dbus");
 
     while let Some(msg) = stream.try_next().await? {
         // I couldn't get match rules working so doing an if condition here instead...
@@ -77,7 +81,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let body: Str = msg_fields[4].clone().try_into()?;
 
             if app_name == Str::from("Google Chrome") && body.contains("teams.microsoft.com") {
-                println!("Republishing notification {app_name} ({title}) in 2 seconds");
+                let span = span!(Level::INFO, "Republishing notification");
+                let _enter = span.enter();
+
                 tokio::time::sleep(Duration::from_secs(2)).await;
 
                 last_notification_id = notify_send(
@@ -87,8 +93,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     body.as_str(),
                 )
                 .await?;
+
+                event!(Level::INFO, app_name = %app_name, title = %title, "Republished notification");
             } else {
-                println!("Ignoring notification from {app_name} ({title})");
+                event!(Level::DEBUG, app_name = %app_name, title = %title, "Ignored notification");
             }
         }
     }
