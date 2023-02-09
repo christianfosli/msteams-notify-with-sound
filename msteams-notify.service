@@ -1,0 +1,12 @@
+[Unit]
+Description=MS Teams notify with sound
+Requires=dbus.service
+After=dbus.service
+
+[Service]
+ExecStart=/bin/bash -c 'RUST_LOG=Debug msteams-notify'
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
