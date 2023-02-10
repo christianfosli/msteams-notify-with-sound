@@ -55,9 +55,8 @@ It seems to do its job now but there are some rough edges I'd like to improve st
 
 * Run with `RUST_LOG=Debug msteams-notify`
 
-  * This runs the msteams-notify binary we installed on the previous step.
-    You can also use standard cargo commands like `cargo run` to run it straght from the repo
-    without "installing" it first.
+  * This runs the msteams-notify binary we installed on the previous step (assuming ~/.cargo/bin is available in your $PATH).
+    You can also use standard cargo commands like `cargo run` to run it straght from the repo without "installing" it first.
 
 * OR Run it in the background automatically with systemd:
 
@@ -66,7 +65,7 @@ It seems to do its job now but there are some rough edges I'd like to improve st
   systemctl --user start msteams-notify
   ```
 
-  * Troubleshooting:
+  * Troubleshooting the systemd service:
 
     ```
     systemctl --user status msteams-notify
