@@ -80,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let title: Str = msg_fields[3].clone().try_into()?;
             let body: Str = msg_fields[4].clone().try_into()?;
 
-            if app_name == Str::from("Google Chrome") && body.contains("teams.microsoft.com") {
+            if app_name == *"Google Chrome" && body.contains("teams.microsoft.com") {
                 let span = span!(Level::INFO, "Republishing notification");
                 let _enter = span.enter();
 
@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let id = notify_send(
                     &connection2,
                     last_notification_id,
-                    &format!("MS Teams: {}", title),
+                    &format!("MS Teams: {title}"),
                     body.as_str(),
                 )
                 .await?;
