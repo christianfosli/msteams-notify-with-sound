@@ -58,16 +58,18 @@ It seems to do its job now but there are some rough edges I'd like to improve st
   * This runs the msteams-notify binary we installed on the previous step (assuming ~/.cargo/bin is available in your $PATH).
     You can also use standard cargo commands like `cargo run` to run it straght from the repo without "installing" it first.
 
-* OR Run it in the background automatically with systemd:
+* OR Run it in the background automatically with systemd. E.g.
 
-  ```
+  ```sh
   systemctl --user enable ./msteams-notify.service
   systemctl --user start msteams-notify
   ```
 
+  In case of issues enabling the service, see [#1](https://github.com/christianfosli/msteams-notify-with-sound/issues/1)
+
   * Troubleshooting the systemd service:
 
-    ```
+    ```sh
     systemctl --user status msteams-notify
     journalctl --user -u msteams-notify
     ```
